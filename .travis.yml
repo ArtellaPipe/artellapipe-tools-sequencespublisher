@@ -1,0 +1,30 @@
+language: python
+before_install:
+- pip install pycodestyle
+install:
+- pip install -r requirements.txt
+- python setup.py install
+script:
+- find . -name \*.py -exec pycodestyle --max-line-length=120 --ignore=E402 {} +
+- pytest --cov=artellapipe
+- sphinx-apidoc -f -e -o docs/sphinx artellapipe
+- sphinx-build -M html ./docs/sphinx ./
+after_success:
+- coveralls
+- cd html && touch .nojekyll && cd ../
+deploy:
+  - provider: pages
+    skip_cleanup: true
+    github_token: "$GITHUB_TOKEN"
+    keep_history: true
+    local_dir: html
+    on:
+      branch: master
+  - provider: pypi
+    skip_cleanup: true
+    user: tpoveda
+    password:
+      secure: ahGvpprcDeh4YlqtIgVivP3JOE0APCXz0JhbVpqwWVn9qhnCOtF6nisk9TLrFcV6d0w1jaM0FQBLqJ6rXMV9HSBcOHvQQvEIli8f2nSnt7LbR7xOliKcGEPiDnj2qp3HULBU63vHbcvLIjxZFO403Rq/xmxkGkaNJjValWvXXMljhwOEuVvjDKz7jduuCNY0mjvX3EnZb0SiH4kiQWJ2bZQlEdRjLNQ9HRvaooAyX1OocSGKXKiZEdf7ebUE7+iAS1KNQ2FvSQW/02Lv0Je46kLLv3Vy+vYqBNh2Wol9bTnqIu9NjabgZlyPWYnkgFOAmRD7sdwu6PrJR83yOv+2IYV6MMfM+mPRjdZ7YlklC/Rt/i92n586juyFE0/EsrclTa0Yp0y6W2XGzE6/CfJUxCbd/9KvkblY536QW2J8rRGCl/GDFrTWIkXyGsud7x4AV42OSjdzaf2DtRURUHvwEz3glNSuiOlqpX9fuFf/GEet0DfWSubBWtFqCxFKDVDNAfZ+/XSFhyZI7wnKZ2TxQdjFSUb6LhYJjdQHLwpSYbHwkuXkb0c/fJvAQ7j1Ys4L4FkhN60ohxrc93VrKcmXZmNENVdtt+yqbGvbpTtCumOq17cGxToQ2J4jfI7c95Zswo5gvmZiJobgiBF4rjzfGsdLKhvfJP0XIZrcD24pX2M=
+    on:
+      branch: master
+      tags: true
