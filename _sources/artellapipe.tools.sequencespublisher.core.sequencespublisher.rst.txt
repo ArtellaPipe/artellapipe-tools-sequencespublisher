@@ -1,0 +1,7 @@
+artellapipe.tools.sequencespublisher.core.sequencespublisher module
+===================================================================
+
+.. automodule:: artellapipe.tools.sequencespublisher.core.sequencespublisher
+   :members:
+   :undoc-members:
+   :show-inheritance:

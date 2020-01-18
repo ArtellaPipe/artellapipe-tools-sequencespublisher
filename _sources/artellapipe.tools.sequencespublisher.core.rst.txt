@@ -1,0 +1,17 @@
+artellapipe.tools.sequencespublisher.core package
+=================================================
+
+Submodules
+----------
+
+.. toctree::
+
+   artellapipe.tools.sequencespublisher.core.sequencespublisher
+
+Module contents
+---------------
+
+.. automodule:: artellapipe.tools.sequencespublisher.core
+   :members:
+   :undoc-members:
+   :show-inheritance:
