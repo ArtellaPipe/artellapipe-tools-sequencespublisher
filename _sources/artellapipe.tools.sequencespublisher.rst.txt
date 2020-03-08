@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
    artellapipe.tools.sequencespublisher.core
+   artellapipe.tools.sequencespublisher.widgets
 
 Module contents
 ---------------
