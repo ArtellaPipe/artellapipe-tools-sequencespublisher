@@ -12,111 +12,57 @@ __license__ = "MIT"
 __maintainer__ = "Tomas Poveda"
 __email__ = "tpovedatd@gmail.com"
 
-import os
-import logging
-
-from Qt.QtWidgets import *
-
-from tpQtLib.widgets import stack, splitters
-
 import artellapipe
-from artellapipe.utils import resource
 
-LOGGER = logging.getLogger()
+# Defines ID of the tool
+TOOL_ID = 'artellapipe-tools-sequencespublisher'
+
+# We skip the reloading of this module when launching the tool
+no_reload = True
 
 
-class SequencesPublisher(artellapipe.PyblishTool, object):
+class SequencesPublisherTool(artellapipe.Tool, object):
+    def __init__(self, *args, **kwargs):
+        super(SequencesPublisherTool, self).__init__(*args, **kwargs)
 
-    def __init__(self, project, config):
-        super(SequencesPublisher, self).__init__(project=project, config=config)
+    @classmethod
+    def config_dict(cls, file_name=None):
+        base_tool_config = artellapipe.Tool.config_dict(file_name=file_name)
+        tool_config = {
+            'name': 'Sequences Publisher',
+            'id': 'artellapipe-tools-sequencespublisher',
+            'logo': 'sequencespublisher_logo',
+            'icon': 'sequencespublisher',
+            'tooltip': 'Tool that allow layout department to generate shot files from a sequence file (master layout)',
+            'tags': ['shots', 'sequencers', 'publisher', 'pyblish'],
+            'sentry_id': 'https://40f85d79f6184fbabedecd5b1a0ba14b@sentry.io/1886517',
+            'is_checkable': False,
+            'is_checked': False,
+            'menu_ui': {
+                'label': 'Sequences Publisher', 'load_on_startup': False, 'color': '', 'background_color': ''},
+            'menu': [
+                {'label': 'Layout',
+                 'type': 'menu', 'children': [{'id': 'artellapipe-tools-sequencespublisher', 'type': 'tool'}]}],
+            'shelf': [
+                {'name': 'Layout',
+                 'children': [{'id': 'artellapipe-tools-sequencespublisher', 'display_label': False, 'type': 'tool'}]}
+            ]
+        }
+        base_tool_config.update(tool_config)
 
-        self.update_sequences()
+        return base_tool_config
 
-    def ui(self):
-        super(SequencesPublisher, self).ui()
 
-        self._stack = stack.SlidingStackedWidget()
-        self.main_layout.addWidget(self._stack)
+class SequencesPublisherToolset(artellapipe.Toolset, object):
+    ID = TOOL_ID
 
-        self._sequences_viewer = artellapipe.SequencesViewer(project=self._project)
-        self._stack.addWidget(self._sequences_viewer)
+    def __init__(self, *args, **kwargs):
+        super(SequencesPublisherToolset, self).__init__(*args, **kwargs)
 
-        publisher_widget = QWidget()
-        self._publisher_layout = QVBoxLayout()
-        self._publisher_layout.setContentsMargins(0, 0, 0, 0)
-        self._publisher_layout.setSpacing(2)
-        publisher_widget.setLayout(self._publisher_layout)
-        self._stack.addWidget(publisher_widget)
+    def contents(self):
 
-        back_icon = resource.ResourceManager().icon('back')
-        self._back_btn = QPushButton()
-        self._back_btn.setIcon(back_icon)
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.setSpacing(2)
-        self._publisher_layout.addLayout(buttons_layout)
-        buttons_layout.addWidget(self._back_btn)
-        buttons_layout.addItem(QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        self._publisher_layout.addLayout(splitters.SplitterLayout())
-        options_layout = QHBoxLayout()
-        options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.setSpacing(2)
-        self._publisher_layout.addLayout(options_layout)
-        self._upload_new_version_cbx = QCheckBox('Upload New Version')
-        os.environ['{}_SEQUENCES_PUBLISHER_NEW_VERSION'.format(self._project.get_clean_name().upper())] = str(False)
-        options_layout.addWidget(self._upload_new_version_cbx)
-        options_layout.addItem(QSpacerItem(10, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
+        from artellapipe.tools.sequencespublisher.widgets import sequencespublisher
 
-    def setup_signals(self):
-        self._sequences_viewer.sequenceAdded.connect(self._on_sequence_added)
-        self._stack.animFinished.connect(self._on_stack_anim_finished)
-        self._upload_new_version_cbx.toggled.connect(self._on_toggle_upload_new_version)
-        self._back_btn.clicked.connect(self._on_back)
-
-    def post_attacher_set(self):
-        super(SequencesPublisher, self).post_attacher_set()
-
-        self._publisher_layout.addWidget(self._pyblish_window)
-
-    def update_sequences(self, force=False):
-        self._sequences_viewer.update_sequences(force=force)
-
-    def _setup_sequence_signals(self, sequence_widget):
-        """
-        Internal function that sets proper signals to given sequence widget
-        This function can be extended to add new signals to added items
-        :param sequence_widget: ArtellaSequenceWidget
-        """
-
-        sequence_widget.clicked.connect(self._on_sequence_clicked)
-
-    def _on_sequence_added(self, sequence_widget):
-        self._setup_sequence_signals(sequence_widget)
-
-    def _on_sequence_clicked(self, sequence_widget):
-        if not sequence_widget:
-            return
-        sequence = sequence_widget.sequence
-        if not sequence:
-            return
-
-        sequence_name = sequence.get_name()
-        sequence = artellapipe.SequencesMgr().find_sequence(sequence_name)
-        if not sequence:
-            LOGGER.warning('No Sequence found with name "{}" in current project'.format(sequence_name))
-            return
-        valid_open = sequence.open_master_layout()
-        if not valid_open:
-            return
-
-        self._stack.slide_in_index(1)
-
-    def _on_stack_anim_finished(self, index):
-        if index == 1:
-            self._pyblish_window.reset()
-
-    def _on_back(self):
-        self._stack.slide_in_index(0)
-
-    def _on_toggle_upload_new_version(self, flag):
-        os.environ['{}_SEQUENCES_PUBLISHER_NEW_VERSION'.format(self._project.get_clean_name().upper())] = str(flag)
+        sequences_publisher = sequencespublisher.SequencesPublisher(
+            project=self._project, config=self._config, settings=self._settings, parent=self)
+        return [sequences_publisher]
