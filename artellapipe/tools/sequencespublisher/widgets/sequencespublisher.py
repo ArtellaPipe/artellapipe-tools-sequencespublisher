@@ -32,6 +32,8 @@ class SequencesPublisher(artellapipe.PyblishTool, object):
 
         self.update_sequences()
 
+        self._publisher_layout.addWidget(self._pyblish_window)
+
     def ui(self):
         super(SequencesPublisher, self).ui()
 
@@ -72,11 +74,6 @@ class SequencesPublisher(artellapipe.PyblishTool, object):
         self._stack.animFinished.connect(self._on_stack_anim_finished)
         self._upload_new_version_cbx.toggled.connect(self._on_toggle_upload_new_version)
         self._back_btn.clicked.connect(self._on_back)
-
-    def post_attacher_set(self):
-        super(SequencesPublisher, self).post_attacher_set()
-
-        self._publisher_layout.addWidget(self._pyblish_window)
 
     def update_sequences(self, force=False):
         self._sequences_viewer.update_sequences(force=force)
